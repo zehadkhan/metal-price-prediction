@@ -23,6 +23,7 @@ import logging
 from fredapi import Fred
 import yfinance as yf
 from dotenv import load_dotenv
+from tariff_sanction_scraper import TariffSanctionScraper
 
 # Load environment variables
 load_dotenv()
@@ -49,6 +50,9 @@ class CommodityDataPipeline:
         """
         self.fred_api_key = fred_api_key
         self.fred = Fred(api_key=fred_api_key)
+        
+        # Initialize tariff and sanction scraper
+        self.tariff_sanction_scraper = TariffSanctionScraper()
         
         # FRED series mappings (using working series)
         self.fred_series = {
@@ -227,7 +231,7 @@ class CommodityDataPipeline:
         
         # Handle missing values with forward fill
         numeric_columns = merged.select_dtypes(include=[np.number]).columns
-        merged[numeric_columns] = merged[numeric_columns].fillna(method='ffill')
+        merged[numeric_columns] = merged[numeric_columns].ffill()
         
         # Drop rows where all key indicators are missing
         key_indicators = ['Gold_Price', 'Silver_Price', 'Oil_Price', 'USD_Index', 'CPI']
@@ -252,9 +256,16 @@ class CommodityDataPipeline:
         # Select numeric columns for correlation
         numeric_cols = data.select_dtypes(include=[np.number]).columns
         
-        # Focus on key indicators
-        key_indicators = ['Gold_Price', 'Silver_Price', 'Oil_Price', 'USD_Index', 'CPI', 'Close']
+        # Focus on key indicators including tariff and sanction data
+        key_indicators = ['Oil_Price', 'USD_Index', 'CPI', 'Close', 
+                         'US_Tariff_Index', 'Sanction_Intensity', 'Russia_Sanction_Intensity',
+                         'Sanction_Proxy_Russia_Trade', 'US_Sanction_Index']
         available_indicators = [col for col in key_indicators if col in numeric_cols]
+        
+        # If no tariff/sanction indicators, use basic ones
+        if len(available_indicators) < 3:
+            key_indicators = ['Oil_Price', 'USD_Index', 'CPI', 'Close']
+            available_indicators = [col for col in key_indicators if col in numeric_cols]
         
         if len(available_indicators) < 2:
             logger.warning("Not enough indicators for correlation plot")
@@ -356,6 +367,29 @@ class CommodityDataPipeline:
         
         print("="*60)
     
+    def get_tariff_sanction_data(self, start_date: str = '2020-01-01', end_date: str = None) -> pd.DataFrame:
+        """
+        Fetch tariff and sanction data from web scraping.
+        
+        Args:
+            start_date (str): Start date for data collection
+            end_date (str): End date for data collection
+            
+        Returns:
+            pd.DataFrame: Combined tariff and sanction data
+        """
+        logger.info("Fetching tariff and sanction data...")
+        
+        try:
+            tariff_sanction_data = self.tariff_sanction_scraper.get_combined_tariff_sanction_data(
+                start_date, end_date
+            )
+            logger.info(f"Successfully fetched {len(tariff_sanction_data)} records of tariff/sanction data")
+            return tariff_sanction_data
+        except Exception as e:
+            logger.error(f"Error fetching tariff/sanction data: {str(e)}")
+            return pd.DataFrame()
+    
     def run_pipeline(self, start_date: str = '2020-01-01', end_date: str = None, 
                     output_file: str = 'global_commodity_economy.csv'):
         """
@@ -375,8 +409,37 @@ class CommodityDataPipeline:
             # Fetch Yahoo Finance data
             yahoo_data = self.get_yfinance_data(start_date, end_date)
             
-            # Merge the data
-            self.combined_data = self.merge_data(fred_data, yahoo_data)
+            # Fetch Tariff and Sanction data
+            tariff_sanction_data = self.get_tariff_sanction_data(start_date, end_date)
+            
+            # Merge all data
+            # First merge FRED and Yahoo Finance
+            combined = self.merge_data(fred_data, yahoo_data)
+            
+            # Then merge with tariff/sanction data
+            if not tariff_sanction_data.empty and not combined.empty:
+                # Convert date columns to datetime and normalize timezones
+                combined['Date'] = pd.to_datetime(combined['Date']).dt.tz_localize(None)
+                tariff_sanction_data['Date'] = pd.to_datetime(tariff_sanction_data['Date']).dt.tz_localize(None)
+                
+                # Merge
+                self.combined_data = pd.merge(
+                    combined,
+                    tariff_sanction_data,
+                    on='Date',
+                    how='outer'
+                )
+                self.combined_data = self.combined_data.sort_values('Date').reset_index(drop=True)
+                
+                # Forward fill missing values
+                numeric_columns = self.combined_data.select_dtypes(include=[np.number]).columns
+                self.combined_data[numeric_columns] = self.combined_data[numeric_columns].ffill()
+                self.combined_data[numeric_columns] = self.combined_data[numeric_columns].bfill()
+                
+                logger.info(f"Successfully merged tariff/sanction data: {len(self.combined_data)} records")
+            else:
+                self.combined_data = combined
+                logger.warning("Tariff/sanction data not available, using base dataset")
             
             if self.combined_data.empty:
                 logger.error("Pipeline failed: No data was successfully collected")
