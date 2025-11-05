@@ -2,8 +2,15 @@
 """
 Tariff and Sanction Data Scraper
 
-This module scrapes tariff and sanction data from various public sources
-to enhance commodity market predictions.
+⚠️ IMPORTANT: This module currently generates PROXY/SIMULATED data based on known events.
+It does NOT fetch real tariff/sanction data from official APIs.
+
+For production use, you need to:
+1. Register for UN Comtrade API (tariffs): https://comtradeplus.un.org/
+2. Download OFAC SDN Lists (sanctions): https://ofac.treasury.gov/
+3. Integrate real data sources
+
+See REAL_DATA_SOURCES.md for legitimate data sources.
 """
 
 import pandas as pd
@@ -32,17 +39,27 @@ class TariffSanctionScraper:
         
     def get_tariff_data_from_fred(self, start_date: str = '2020-01-01', end_date: str = None) -> pd.DataFrame:
         """
-        Get tariff-related data from FRED API.
-        Uses trade-weighted indexes as proxies for tariff effects.
+        ⚠️ PROXY DATA: Creates simulated tariff proxy data.
+        
+        This does NOT fetch real tariff data. It creates simulated values based on:
+        - Known trade policy dates
+        - Mathematical trends
+        - Random noise
+        
+        For REAL data, use:
+        - UN Comtrade API: https://comtradeplus.un.org/
+        - USITC DataWeb: https://dataweb.usitc.gov/
+        - WTO Tariff Database
         
         Args:
             start_date: Start date for data collection
             end_date: End date for data collection
             
         Returns:
-            DataFrame with tariff proxy data
+            DataFrame with SIMULATED tariff proxy data
         """
-        logger.info("Fetching tariff proxy data from FRED...")
+        logger.warning("⚠️ Generating PROXY tariff data (not real data)")
+        logger.info("For real tariff data, see REAL_DATA_SOURCES.md")
         
         if end_date is None:
             end_date = datetime.now().strftime('%Y-%m-%d')
@@ -58,25 +75,23 @@ class TariffSanctionScraper:
         
         for name, series_id in tariff_series.items():
             try:
-                # Try to fetch from FRED (if available)
-                # Note: Some series may not exist, so we'll create proxies
-                logger.info(f"Attempting to fetch {name} ({series_id})...")
+                # ⚠️ PROXY DATA: Creating simulated values
+                # This is NOT real tariff data from FRED or any official source
+                logger.info(f"⚠️ Creating PROXY data for {name} ({series_id})...")
                 
-                # Create a proxy based on trade data
-                # This is a simplified approach - in production, you'd use actual tariff data
                 dates = pd.date_range(start=start_date, end=end_date, freq='D')
                 
-                # Create a tariff proxy that increases over time (reflecting trade tensions)
-                # This is a simplified model - replace with actual data when available
+                # ⚠️ SIMULATED: Create a tariff proxy that increases over time
+                # Based on known trade policy dates, but values are simulated
                 base_tariff = 100
                 tariff_trend = np.linspace(0, 20, len(dates))  # Simulated increase
                 tariff_values = base_tariff + tariff_trend + np.random.normal(0, 2, len(dates))
                 
                 tariff_data[name] = pd.Series(tariff_values, index=dates)
-                logger.info(f"Created proxy data for {name}: {len(tariff_values)} records")
+                logger.warning(f"⚠️ Created PROXY data for {name}: {len(tariff_values)} records (NOT REAL)")
                 
             except Exception as e:
-                logger.warning(f"Could not fetch {name}: {str(e)}")
+                logger.warning(f"Could not create proxy for {name}: {str(e)}")
                 continue
         
         if not tariff_data:
@@ -92,17 +107,26 @@ class TariffSanctionScraper:
     
     def get_sanction_data_proxy(self, start_date: str = '2020-01-01', end_date: str = None) -> pd.DataFrame:
         """
-        Create sanction proxy data based on major sanction events.
-        Uses known sanction dates and creates intensity proxies.
+        ⚠️ PROXY DATA: Creates simulated sanction intensity based on known dates.
+        
+        This does NOT fetch real sanction data from OFAC or any official source.
+        It uses known event dates (e.g., Russia-Ukraine 2022-02-24) but creates
+        simulated intensity values.
+        
+        For REAL data, use:
+        - OFAC SDN Lists: https://ofac.treasury.gov/
+        - UN Sanctions Lists: https://www.un.org/securitycouncil/sanctions/
+        - EU Sanctions: https://ec.europa.eu/info/business-economy-euro/banking-and-finance/international-relations/restrictive-measures-sanctions_en
         
         Args:
             start_date: Start date for data collection
             end_date: End date for data collection
             
         Returns:
-            DataFrame with sanction proxy data
+            DataFrame with SIMULATED sanction proxy data
         """
-        logger.info("Creating sanction proxy data...")
+        logger.warning("⚠️ Generating PROXY sanction data (not real data)")
+        logger.info("For real sanction data, see REAL_DATA_SOURCES.md")
         
         if end_date is None:
             end_date = datetime.now().strftime('%Y-%m-%d')
@@ -148,17 +172,25 @@ class TariffSanctionScraper:
     
     def scrape_tariff_data_web(self, start_date: str = '2020-01-01', end_date: str = None) -> pd.DataFrame:
         """
-        Scrape tariff data from web sources.
-        This is a placeholder for actual web scraping implementation.
+        ⚠️ PROXY DATA: Creates simulated tariff index based on known policy dates.
+        
+        This does NOT actually scrape web sources. It creates simulated values
+        based on known trade policy events (e.g., 2020 trade tensions).
+        
+        To implement REAL scraping:
+        1. Register for UN Comtrade API: https://comtradeplus.un.org/
+        2. Use USITC DataWeb: https://dataweb.usitc.gov/
+        3. Parse WTO tariff databases
         
         Args:
             start_date: Start date for data collection
             end_date: End date for data collection
             
         Returns:
-            DataFrame with tariff data
+            DataFrame with SIMULATED tariff data
         """
-        logger.info("Scraping tariff data from web sources...")
+        logger.warning("⚠️ Creating PROXY tariff data (not real web scraping)")
+        logger.info("For real tariff scraping, implement UN Comtrade API or USITC DataWeb")
         
         if end_date is None:
             end_date = datetime.now().strftime('%Y-%m-%d')
@@ -206,17 +238,26 @@ class TariffSanctionScraper:
     
     def scrape_sanction_data_web(self, start_date: str = '2020-01-01', end_date: str = None) -> pd.DataFrame:
         """
-        Scrape sanction data from web sources.
-        This scrapes publicly available sanction information.
+        ⚠️ PROXY DATA: Creates simulated sanction data based on known events.
+        
+        This does NOT actually scrape OFAC or other official sources. It creates
+        simulated values based on known sanction event dates.
+        
+        To implement REAL scraping:
+        1. Download OFAC SDN Lists: https://ofac.treasury.gov/specially-designated-nationals-list-sdn-list
+        2. Parse XML/CSV format
+        3. Count sanctions by date/entity
+        4. Create time series
         
         Args:
             start_date: Start date for data collection
             end_date: End date for data collection
             
         Returns:
-            DataFrame with sanction data
+            DataFrame with SIMULATED sanction data
         """
-        logger.info("Scraping sanction data from web sources...")
+        logger.warning("⚠️ Creating PROXY sanction data (not real web scraping)")
+        logger.info("For real sanction scraping, implement OFAC SDN List parser")
         
         if end_date is None:
             end_date = datetime.now().strftime('%Y-%m-%d')
