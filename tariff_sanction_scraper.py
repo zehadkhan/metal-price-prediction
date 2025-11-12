@@ -25,6 +25,9 @@ import json
 
 logger = logging.getLogger(__name__)
 
+# Default start date: 15 years ago
+DEFAULT_START_DATE = (datetime.now() - timedelta(days=15*365)).strftime('%Y-%m-%d')
+
 class TariffSanctionScraper:
     """
     Scraper for tariff and sanction data from multiple sources.
@@ -37,7 +40,7 @@ class TariffSanctionScraper:
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
         })
         
-    def get_tariff_data_from_fred(self, start_date: str = '2020-01-01', end_date: str = None) -> pd.DataFrame:
+    def get_tariff_data_from_fred(self, start_date: str = None, end_date: str = None) -> pd.DataFrame:
         """
         ⚠️ PROXY DATA: Creates simulated tariff proxy data.
         
@@ -61,6 +64,8 @@ class TariffSanctionScraper:
         logger.warning("⚠️ Generating PROXY tariff data (not real data)")
         logger.info("For real tariff data, see REAL_DATA_SOURCES.md")
         
+        if start_date is None:
+            start_date = DEFAULT_START_DATE
         if end_date is None:
             end_date = datetime.now().strftime('%Y-%m-%d')
         
@@ -105,7 +110,7 @@ class TariffSanctionScraper:
         
         return df
     
-    def get_sanction_data_proxy(self, start_date: str = '2020-01-01', end_date: str = None) -> pd.DataFrame:
+    def get_sanction_data_proxy(self, start_date: str = None, end_date: str = None) -> pd.DataFrame:
         """
         ⚠️ PROXY DATA: Creates simulated sanction intensity based on known dates.
         
@@ -128,6 +133,8 @@ class TariffSanctionScraper:
         logger.warning("⚠️ Generating PROXY sanction data (not real data)")
         logger.info("For real sanction data, see REAL_DATA_SOURCES.md")
         
+        if start_date is None:
+            start_date = DEFAULT_START_DATE
         if end_date is None:
             end_date = datetime.now().strftime('%Y-%m-%d')
         
@@ -170,7 +177,7 @@ class TariffSanctionScraper:
         logger.info(f"Created sanction proxy data: {len(df)} records")
         return df
     
-    def scrape_tariff_data_web(self, start_date: str = '2020-01-01', end_date: str = None) -> pd.DataFrame:
+    def scrape_tariff_data_web(self, start_date: str = None, end_date: str = None) -> pd.DataFrame:
         """
         ⚠️ PROXY DATA: Creates simulated tariff index based on known policy dates.
         
@@ -192,6 +199,8 @@ class TariffSanctionScraper:
         logger.warning("⚠️ Creating PROXY tariff data (not real web scraping)")
         logger.info("For real tariff scraping, implement UN Comtrade API or USITC DataWeb")
         
+        if start_date is None:
+            start_date = DEFAULT_START_DATE
         if end_date is None:
             end_date = datetime.now().strftime('%Y-%m-%d')
         
@@ -236,7 +245,7 @@ class TariffSanctionScraper:
             logger.error(f"Error scraping tariff data: {str(e)}")
             return pd.DataFrame()
     
-    def scrape_sanction_data_web(self, start_date: str = '2020-01-01', end_date: str = None) -> pd.DataFrame:
+    def scrape_sanction_data_web(self, start_date: str = None, end_date: str = None) -> pd.DataFrame:
         """
         ⚠️ PROXY DATA: Creates simulated sanction data based on known events.
         
@@ -259,6 +268,8 @@ class TariffSanctionScraper:
         logger.warning("⚠️ Creating PROXY sanction data (not real web scraping)")
         logger.info("For real sanction scraping, implement OFAC SDN List parser")
         
+        if start_date is None:
+            start_date = DEFAULT_START_DATE
         if end_date is None:
             end_date = datetime.now().strftime('%Y-%m-%d')
         
@@ -310,7 +321,7 @@ class TariffSanctionScraper:
             logger.error(f"Error scraping sanction data: {str(e)}")
             return pd.DataFrame()
     
-    def get_combined_tariff_sanction_data(self, start_date: str = '2020-01-01', end_date: str = None) -> pd.DataFrame:
+    def get_combined_tariff_sanction_data(self, start_date: str = None, end_date: str = None) -> pd.DataFrame:
         """
         Get combined tariff and sanction data from all sources.
         

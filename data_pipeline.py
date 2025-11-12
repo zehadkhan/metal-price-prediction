@@ -35,6 +35,9 @@ logger = logging.getLogger(__name__)
 # Suppress warnings
 warnings.filterwarnings('ignore')
 
+# Default start date: 15 years ago
+DEFAULT_START_DATE = (datetime.now() - timedelta(days=15*365)).strftime('%Y-%m-%d')
+
 class CommodityDataPipeline:
     """
     A comprehensive data pipeline for collecting and combining 
@@ -71,12 +74,12 @@ class CommodityDataPipeline:
         
         self.combined_data = None
         
-    def get_fred_data(self, start_date: str = '2020-01-01', end_date: str = None) -> pd.DataFrame:
+    def get_fred_data(self, start_date: str = None, end_date: str = None) -> pd.DataFrame:
         """
         Fetch economic data from FRED API.
         
         Args:
-            start_date (str): Start date for data collection (YYYY-MM-DD)
+            start_date (str): Start date for data collection (YYYY-MM-DD). Defaults to 15 years ago.
             end_date (str): End date for data collection (YYYY-MM-DD)
             
         Returns:
@@ -84,6 +87,8 @@ class CommodityDataPipeline:
         """
         logger.info("Fetching FRED economic data...")
         
+        if start_date is None:
+            start_date = DEFAULT_START_DATE
         if end_date is None:
             end_date = datetime.now().strftime('%Y-%m-%d')
             
@@ -122,12 +127,12 @@ class CommodityDataPipeline:
         logger.info(f"Successfully combined {len(combined_fred)} records from FRED")
         return combined_fred
     
-    def get_yfinance_data(self, start_date: str = '2020-01-01', end_date: str = None) -> pd.DataFrame:
+    def get_yfinance_data(self, start_date: str = None, end_date: str = None) -> pd.DataFrame:
         """
         Fetch commodity futures data from Yahoo Finance.
         
         Args:
-            start_date (str): Start date for data collection (YYYY-MM-DD)
+            start_date (str): Start date for data collection (YYYY-MM-DD). Defaults to 15 years ago.
             end_date (str): End date for data collection (YYYY-MM-DD)
             
         Returns:
@@ -135,6 +140,8 @@ class CommodityDataPipeline:
         """
         logger.info("Fetching Yahoo Finance commodity data...")
         
+        if start_date is None:
+            start_date = DEFAULT_START_DATE
         if end_date is None:
             end_date = datetime.now().strftime('%Y-%m-%d')
             
@@ -367,18 +374,23 @@ class CommodityDataPipeline:
         
         print("="*60)
     
-    def get_tariff_sanction_data(self, start_date: str = '2020-01-01', end_date: str = None) -> pd.DataFrame:
+    def get_tariff_sanction_data(self, start_date: str = None, end_date: str = None) -> pd.DataFrame:
         """
         Fetch tariff and sanction data from web scraping.
         
         Args:
-            start_date (str): Start date for data collection
+            start_date (str): Start date for data collection. Defaults to 15 years ago.
             end_date (str): End date for data collection
             
         Returns:
             pd.DataFrame: Combined tariff and sanction data
         """
         logger.info("Fetching tariff and sanction data...")
+        
+        if start_date is None:
+            start_date = DEFAULT_START_DATE
+        if end_date is None:
+            end_date = datetime.now().strftime('%Y-%m-%d')
         
         try:
             tariff_sanction_data = self.tariff_sanction_scraper.get_combined_tariff_sanction_data(
@@ -390,17 +402,24 @@ class CommodityDataPipeline:
             logger.error(f"Error fetching tariff/sanction data: {str(e)}")
             return pd.DataFrame()
     
-    def run_pipeline(self, start_date: str = '2020-01-01', end_date: str = None, 
+    def run_pipeline(self, start_date: str = None, end_date: str = None, 
                     output_file: str = 'global_commodity_economy.csv'):
         """
         Run the complete data pipeline.
         
         Args:
-            start_date (str): Start date for data collection
+            start_date (str): Start date for data collection. Defaults to 15 years ago.
             end_date (str): End date for data collection  
             output_file (str): Output CSV filename
         """
         logger.info("Starting Global Commodity Economy Data Pipeline...")
+        
+        if start_date is None:
+            start_date = DEFAULT_START_DATE
+        if end_date is None:
+            end_date = datetime.now().strftime('%Y-%m-%d')
+        
+        logger.info(f"Collecting data from {start_date} to {end_date} (approximately {((datetime.strptime(end_date, '%Y-%m-%d') - datetime.strptime(start_date, '%Y-%m-%d')).days / 365.25):.1f} years)")
         
         try:
             # Fetch FRED data
@@ -477,9 +496,9 @@ def main():
     # Initialize pipeline
     pipeline = CommodityDataPipeline(fred_api_key)
     
-    # Run the pipeline
+    # Run the pipeline with 15 years of historical data
     pipeline.run_pipeline(
-        start_date='2020-01-01',
+        start_date=None,  # Will use DEFAULT_START_DATE (15 years ago)
         end_date=None,  # Will use current date
         output_file='global_commodity_economy.csv'
     )
