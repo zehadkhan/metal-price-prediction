@@ -1,0 +1,7 @@
+Model,RMSE,MAE,R2
+Ridge Regression,5.2152,3.6058,0.612
+Ridge (RobustScaler),5.6967,4.1815,0.5371
+ElasticNet,37.8858,37.0392,-19.4751
+Random Forest,65.911,64.6162,-60.9712
+Gradient Boosting,87.8133,85.5888,-109.0005
+Prophet (Improved),245.7654,244.9367,-7.301987246648247e+28

@@ -1,0 +1,4 @@
+Model,RMSE,MAE,R2
+Ridge Regression,4.383,3.5074,0.726
+Prophet,361.5465,361.2835,-1863.6709
+Ensemble,3.9062,2.4414,0.7823
